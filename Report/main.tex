@@ -1,0 +1,239 @@
+\documentclass{article}
+
+% if you need to pass options to natbib, use, e.g.:
+% \PassOptionsToPackage{numbers, compress}{natbib}
+% before loading nips_2018
+
+% ready for submission
+%\usepackage{nips_2018}
+
+% to compile a preprint version, e.g., for submission to arXiv, add
+% add the [preprint] option:
+\usepackage[preprint]{nips_2018}
+\usepackage{amsmath,amssymb}
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{graphicx}
+
+% to compile a camera-ready version, add the [final] option, e.g.:
+% \usepackage[final]{nips_2018}
+
+% to avoid loading the natbib package, add option nonatbib:
+% \usepackage[nonatbib]{nips_2018}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+
+\title{\bf Applying Dual-Averaging Sub-gradient method to saddle point problem of Generative adversarial networks}
+
+% The \author macro works with any number of authors. There are two
+% commands used to separate the names and addresses of multiple
+% authors: \And and \AND.
+%
+% Using \And between authors leaves it to LaTeX to determine where to
+% break the lines. Using \AND forces a line break at that point. So,
+% if LaTeX puts 3 of 4 authors names on the first line, and the last
+% on the second line, try using \AND instead of \And before the third
+% author name.
+
+\author{
+  Amol Damare \\
+  Department of Computer Science\\
+  Stony Brook University\\
+  SBU Id:107914028\\
+  \texttt{adamare@cs.stonybrook.edu} \\
+  %% examples of more authors
+  \And
+Arjun Krishna \\
+  Department of Computer Science \\
+  Stony Brook University \\
+  SBU Id:111753053\\
+  \texttt{arjkrishna@cs.stonybrook.edu} \\
+  %% \AND
+  %% Coauthor \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+  %% \And
+  %% Coauthor \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+  %% \And
+  %% Coauthor \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+  Training of Generative Adversarial Networks is hard. It is one of the open research problem in the field of deep learning. The objective of GAN is modeled as saddle point problem. In this paper we have applied already existing algorithms for saddle point problem from optimization theory to GAN. Specifically we have implemented SDA method proposed by \citep{nesterov_primal-dual_2009}. Code for this project can be found at \url{https://github.com/amoldamare/CSE-592-Convex-Optimization-Project}
+\end{abstract}
+
+\section{Introduction}
+
+"Generative Adversarial Networks " proposed by \cite{goodfellow_generative_2014} is generative model that uses 2 feed-forward neural networks which compete with each other to produce a generative model that approximates the real distribution. The results produced by GAN's are realistic and very sharp. Hence they have gained success as a Generative model. But training of GAN is very unstable and is still a open research problem.  \\
+For our class project we will try to apply one of the convex optimization method used to solve  saddle point problems to GAN training. This report will present the work we have done so far on this problem.
+In section 2 we will present the overview of literature survey we did for this project so far. The section 2 is same as what we submitted in project progress report. In section 3 we will present the algorithm we used and the assumptions we made to implement this algorithm. We will present our results in section 4, followed by conclusion and future work.
+\section{Literature survey}
+\cite{goodfellow_generative_2014} first presented the idea of Generative Adversarial Networks, in which the 2 feed forward neural networks "Discriminator" and "Generator" compete with each other by trying to fool one another. Both discriminator and generator are trained simultaneously using loss function:
+\begin{align}
+L(\theta_D,\theta_G)&=\underset{\theta_D}{\text{max}} \text{  }\underset{\theta_G}{\text{min}}\text{  }\mathbb{E}_{x \sim P_{d}}[\log(D_{\theta_D}(x)]+ \mathbb{E}_{z\sim P_{z}}[\log(1-D_{\theta_D}(G_{\theta_G}(z))]\\
+&=\underset{\theta_D}{\text{max}} \text{  }\underset{\theta_G}{\text{min}}\text{  }\frac{1}{m}\sum_{i=1}^{m}(\log(D_{\theta_D}(x_i)+\log(1-D_{\theta_D}(G_{\theta_G}(z_i)))
+\end{align}
+Where $D$ i the discriminator parameterized by $\theta_D$ and $G$ is the generator network parameterized by $\theta_G$. $P_d$ is the probability distribution of the samples and $P_z$ is some prior distribution; \cite{goodfellow_generative_2014} used  a Gaussian prior. Stochastic gradient descent is used to find the optimal parameter values. Detailed algorithm in  \cite{goodfellow_generative_2014} is given in algorithm \ref{alg:algo1}
+\begin{algorithm}
+\caption{Algorithm for GAN}
+\label{alg:algo1}
+\begin{algorithmic}[1]
+\State For training iteration T:
+\State For k iterations:
+\State Train Discriminator using  S.G.D. by using $\nabla_{\theta_D} L(\theta_D,\theta_G)$
+\State End For
+\State Train Generator using  S.G.D. by using $\nabla_{\theta_G} L(\theta_D,\theta_G)$
+\State End For
+
+\State return $\theta_D,\theta_G$
+\end{algorithmic}
+\end{algorithm}
+There are number of loss functions that are used in practice giving rise to a different flavor of GAN \cite{arjovsky_wasserstein_2017,nowozin_f-gan:_2016,radford_unsupervised_2015}. But all of them use variation basic algorithm \ref{alg:algo1} to find optimal parameters. \\
+An interesting approach has been presented in \cite{chen_training_2018}. GAN loss function was modeled after Lagrangian dual function and a variation of algorithm \ref{alg:algo1}  was proposed that will optimize this loss function. Although its an interesting idea, we found that formulation of Lagrangian dual function was not correct and algorithm proposed a different updates for generator network which were not derived from loss function, which we think is a mistake.\\\\
+In optimization theory  various methods have been proposed to solve saddle point problem of the form \\
+\begin{equation}\label{1}
+\underset{u}{\text{min}} \text{  }\underset{v} {\text{max}} f(u,v)
+\end{equation}
+Dual-averaging sub gradient method \cite{nesterov_primal-dual_2009}, stochastic accelerated primal dual method \cite{chen_optimal_2014} are some of the methods that we looked at. For this project we will focus on dual-averaging method proposed in \cite{nesterov_primal-dual_2009}
+\section{Our approach}
+\subsection{Optimization Algorithm}
+We are going to implement dual averaging sub-gradient method proposed in \cite{nesterov_primal-dual_2009} to solve GAN optimization problem. This method finds an optimum solution for problem \ref{1} within given bounds. \\
+\\For this algorithm we assume $u \in U$ , $U$ is convex compact set, $v \in V$ , $V$ is also a convex compact set. We also assume $f(u,.)$ is a convex problem in $u$ and $f(.,v)$ is a concave problem in $v$. Let $d_u$ and $d_v$ be convex, continuous prox functions defined on $U$ and $V$ respectively.We also have following sub-gradients
+$$g_u \in \partial_uf(u,v)$$
+$$g_v \in \partial_vf(u,v)$$
+we also have
+$$g=(g_u,-g_v)$$ Let optimal solution to problem \ref{1} exists $$x^*=(u^*,v^*)$$ where $x^* \in UXV = Q$. We also define, for some $\alpha \in{0,1}$
+$$d(x)=\alpha d_u(u)+(1-\alpha)d_v(v)$$
+$$||x|| =(\alpha\sigma_u||u||_2^2+(1-\alpha)\sigma_v||v||_2^2)^{\frac{1}{2}} $$
+Where are $\sigma_u$ and $\sigma_v$ are convexity constants of $d_u$ and $d_v$ respectively. We also define a projection function as follows:
+$$ \pi_G(s)= \underset{x \in Q}{\text{argmin}} \{ -<s,x>+Gd(x)\}$$
+We define $$x_0 = \underset{x \in Q}{\text{argmin}} \{ d(x)\} $$
+Now we can obtain optimal solution to problem \ref{1} by using algorithm \ref{alg:algo2}.
+\begin{algorithm}
+\caption{Algorithm for Dual-Averaging for Saddle point problem}
+\label{alg:algo2}
+\begin{algorithmic}[1]
+\State $S_0=0$
+\State $\hat{\beta_0},\hat{\beta_1}=1$
+\State Choose $\gamma > 0$
+\State For k=0..T
+\State   Compute $$ g_k=(g_{u_k},-g_{v_k})$$
+\State Compute $$S_{k+1}=S_{k}+g_k$$
+\State Compute $$\hat{\beta_{k+1}}=\sum_{i=0}^k \frac{1}{\hat{\beta_i}}$$
+\State Compute $$\beta_{k+1}=\gamma\hat{\beta_{k+1}}$$
+\State Compute $$x_{k+1}=\pi_{\beta_{k+1}}(-S_{k+1})$$
+\State End For
+\State return $x_T$
+\end{algorithmic}
+\end{algorithm}
+For convergence analysis of algorithm \ref{alg:algo2} we refer you to \cite{nesterov_primal-dual_2009}.
+\newline
+Now to implement algorithm \ref{alg:algo2} we made some assumptions. We assumed following:
+\begin{equation}
+d_u(x)=\frac{1}{2}||x||_2^2
+\end{equation}
+and
+\begin{equation}
+d_v(x)=\frac{1}{2}||x||_2^2
+\end{equation}
+These prox functions will give us following results
+\begin{align*}
+x_0 &= \underset{x \in Q}{\text{argmin}} \{ d(x)\}\\
+&=\underset{u \in U,v \in V}{\text{argmin}} \{ \alpha d_u(u)+(1-\alpha)d_v(v)\}\\
+&=\underset{u \in U,v \in V}{\text{argmin}} \{ \frac{ \alpha}{2}||u||_2^2+\frac{(1-\alpha)}{2}||v||_2^2\}\\
+\end{align*}
+This gives us $$x_0=(u_0,v_0)=(0,0)$$
+Now we compute the step 9 of algorithm \ref{alg:algo2}
+\begin{align*}
+x_{k+1}&=\pi_{\beta_{k+1}}(-S_{k+1})\\
+&=\underset{z \in Q}{\text{argmin}} \{ -<-S_{k+1},z>+\beta_{k+1}d(z)\}
+\end{align*}
+Now let's consider following function
+\begin{equation}
+g(z)=-<-S_{k+1},z>+\beta_{k+1}d(z)
+\end{equation}
+Let's simplify it further
+\begin{align*}
+g(z)&=-<-S_{k+1},z>+\beta_{k+1}d(z)\\
+&=-<\sum_{i=1}^k g_{u,i}-\sum_{i=1}^k g_{v,i}),(u,v)>+\beta_{k+1}(\frac{ \alpha}{2}||u||_2^2+\frac{(1-\alpha)}{2}||v||_2^2)
+\end{align*}
+Taking gradients with respect to u and v of above equation we get solution to step 9 of algorithm \ref{alg:algo2}
+\begin{equation}\label{update1}
+u_{k+1}=\frac{-\sum_{i=1}^k g_{u,i}}{\alpha \beta_{k+1}}
+\end{equation}
+\begin{equation}\label{update2}
+v_{k+1}=\frac{\sum_{i=1}^k g_{v,i}}{(1-\alpha) \beta_{k+1}}
+\end{equation}
+Equation \ref{update1} and  equation \ref{update2} gives us the update rules for our algorithm.
+\subsection{GAN Implementation}
+For our implementation we have used Wasserstein GAN whose objective function is given by
+\begin{equation}
+L(\theta_D,\theta_G)=\underset{\theta_D}{\text{max}} \text{  }\underset{\theta_G}{\text{min}}\text{  }\frac{1}{m}\sum_{i=1}^{m}(D_{\theta_D}(x_i)-D_{\theta_D}(G_{\theta_G}(z_i)))
+\end{equation}
+The deep neural network models that we used are given in figure \ref{fig:generator} and in figure \ref{fig:descriminator}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=4cm,height=4cm]{generator}
+    \caption{Generator Model}
+    \label{fig:generator}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=4cm,height=4cm]{descriminator}
+    \caption{Descriminator Model}
+    \label{fig:descriminator}
+\end{figure}
+\section{Experiment and Results}
+We have implemented the Wasserstein GAN and optimizer given in algorithm \ref{alg:algo2} in pyTorch. We have conducted our experiments on MNIST dataset. For our optimizer we have set $\gamma=1e-4$ and $\alpha=0.9$. We also done comparison with RMSProp optimizer for which we used learning rate of $1e-2$ and momentum=$0.9$. Figure \ref{result_our} shows the generated images using out implementation of optimizer, figure \ref{rms_result} shows generated images using RMSProp. Figure \ref{loss} and figure \ref{rms_loss} give the loss plot of both optimizers.
+\newpage
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=10cm,height=4cm]{nestorov_result}
+    \caption{Generated Images using our optimizer}
+    \label{result_our}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=10cm,height=4cm]{rms_result}
+    \caption{Generated images using RMSProp optimizer}
+    \label{rms_result}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=10cm,height=4cm]{loss}
+    \caption{Loss plot of our optimizer}
+    \label{loss}
+\end{figure}
+\newpage
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=10cm,height=4cm]{loss_rms}
+    \caption{Loss plot of RMSProp optimizer}
+    \label{rms_loss}
+\end{figure}
+\section{Conclusion}
+We were able to successfully apply an existing optimization algorithm for Saddle point problem to Wasserstein GAN with relatively simple model( 1 or 2 layer deep). But we were not able to replicate same for cross-entropy GAN objective or a more complex GAN model like DC-GAN. When compared with existing optimization techniques used to solve GAN we found that they perform very similarly. 
+\bibliographystyle{unsrt}
+\bibliography{ref}
+
+\end{document}
